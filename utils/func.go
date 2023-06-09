@@ -4,17 +4,27 @@ import (
 	md52 "crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"github.com/spf13/cast"
+	"math"
 	"math/rand"
 	"strings"
 	"time"
 )
 
 // RandNumber 随便数字
-func RandNumber(len string) string {
-	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
-	vcode := fmt.Sprintf("%0"+len+"v", rnd.Int63n(1000000000000000000))
-	return vcode
+func RandNumber(len int) string {
+	rs := rand.Intn(int(math.Pow(10, float64(len))))
+	//rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
+	//vcode := fmt.Sprintf("%0"+len+"v", rnd.Int63n(1000000000000000000))
+	return fmt.Sprintf("%0"+cast.ToString(len)+"d", rs)
+	//return vcode
 }
+
+//func RandNumber(len string) string {
+//	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
+//	vcode := fmt.Sprintf("%0"+len+"v", rnd.Int31n(1000000))
+//	return vcode
+//}
 
 // ShadowMobile 隐藏中间四位手机号
 func ShadowMobile(mobile string) string {

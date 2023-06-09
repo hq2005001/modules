@@ -56,7 +56,10 @@ func (a *Alipay) Create(params payment.CreatePaymentParam) payment.CreatePayment
 	p.TotalAmount = fmt.Sprintf("%.2f", params.Total.InexactFloat64())
 	response, err := a.client.TradePreCreate(p)
 	if err != nil {
-		return payment.CreatePaymentResult{}
+		return payment.CreatePaymentResult{
+			Status: false,
+			ErrMsg: err.Error(),
+		}
 	}
 	return payment.CreatePaymentResult{
 		Status:        response.IsSuccess(),
@@ -293,7 +296,7 @@ func (a *Alipay) UnSign(agreementNo string) error {
 }
 
 func New(conf *config.AlipayConfig) *Alipay {
-	client, err := alipay.New(conf.AppID, conf.PrivateKey, conf.Product)
+	client, err := alipay.New(conf.AppID, conf.PrivateKey, conf.Product, alipay.WithSandboxGateway("https://openapi-sandbox.dl.alipaydev.com/gateway.do"))
 	if err != nil {
 		panic("初始化支付宝失败")
 	}
