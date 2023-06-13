@@ -2,71 +2,76 @@ package pic
 
 import (
 	"context"
-	"github.com/redis/go-redis/v9"
-
 	"fmt"
-	"image/color"
+	"github.com/hq2005001/modules/captcha/captcha"
+	"github.com/hq2005001/modules/captcha/conf"
+	"github.com/hq2005001/modules/captcha/pics"
+	"github.com/hq2005001/modules/drivers/nsq"
+	"github.com/hq2005001/modules/drivers/redis"
+
 	"time"
-
-	"github.com/mojocn/base64Captcha"
 )
 
-var (
-	source = "23456789qwertyuipkjhgfdsazxcvbnm"
-	store  = &rdsStore{
-		client: nil,
-	}
+const (
+	// Name 名称
+	Name = "pic"
 )
 
-// Generate 生成
-func Generate() (id string, b64s string, err error) {
-	var driver = base64Captcha.NewDriverString(
-		80,
-		240,
-		1,
-		base64Captcha.OptionShowHollowLine|base64Captcha.OptionShowSineLine|base64Captcha.OptionShowSlimeLine,
-		4,
-		source,
-		&color.RGBA{R: 254, G: 254, B: 254, A: 254},
-		nil,
-		[]string{"wqy-microhei.ttc"})
-	captcha := base64Captcha.NewCaptcha(driver, store)
-	return captcha.Generate()
+// Pic 图片验证码
+type Pic struct {
+	captcha.BaseCaptcha
+	Config      *conf.Config
+	QueueConfig *nsq.NsqConfig
+	RedisConf   *redis.Conf
 }
 
-// Verify 验证
-func Verify(id, code string) bool {
-	return store.Verify(id, code, true)
+// Send 发送验证码
+func (p *Pic) Send(ip, account, subject, content string) error {
+	return nil
 }
 
-type rdsStore struct {
-	client *redis.Client
-}
-
-func (r *rdsStore) Client() *redis.Client {
-	if r.client == nil {
-		//r.client = redis2.New()
-	}
-	return r.client
-}
-
-// Set 设置
-func (r *rdsStore) Set(id string, value string) error {
-	return r.Client().Set(context.TODO(), fmt.Sprintf("pic_captcha:%s", id), value, time.Minute*5).Err()
-}
-
-// Get 得到数据
-func (r *rdsStore) Get(id string, clear bool) string {
+// Validate 验证
+func (p *Pic) Validate(account string, code string) bool {
 	ctx := context.TODO()
-	key := fmt.Sprintf("pic_captcha:%s", id)
-	val := r.Client().Get(ctx, key).Val()
-	if clear && val != "" {
-		r.client.Del(ctx, key)
+	key := p.GetCaptchaCacheKey(account)
+	id := redis.New(p.RedisConf).Get(ctx, key).Val()
+	if pics.Verify(id, code) {
+		redis.New(p.RedisConf).Set(ctx, p.GetValidateKey(account), "1", time.Minute*captcha.CacheMinute)
+		return true
 	}
-	return val
+	p.LogErrorNum(ctx, account)
+	return false
 }
 
-// Verify 验证
-func (r *rdsStore) Verify(id, answer string, clear bool) bool {
-	return r.Get(id, clear) == answer
+// IsValidate 是否通过验证
+func (p *Pic) IsValidate(account string, clear bool) bool {
+	ctx := context.TODO()
+	key := p.GetValidateKey(account)
+	if redis.New(p.RedisConf).Get(ctx, key).Val() == "1" {
+		if clear {
+			redis.New(p.RedisConf).Del(ctx, key)
+			redis.New(p.RedisConf).Del(ctx, p.GetValidateKey(account))
+		}
+		return true
+	}
+	return false
+}
+
+// GenerateContent 生成内容
+func (p *Pic) GenerateContent(account, subject, content string) (interface{}, error) {
+	// 这里生成这次需要的图片验证码的内容
+	id, content, _ := pics.Generate(redis.New(p.RedisConf).Client)
+	key := p.GetCaptchaCacheKey(account)
+	redis.New(p.RedisConf).Set(context.TODO(), key, id, time.Minute*captcha.CacheMinute)
+	return content, nil
+}
+
+// GetCaptchaCacheKey 得到验证码缓存键
+func (p *Pic) GetCaptchaCacheKey(account string) string {
+	return fmt.Sprintf("pic_captcha:%s", account)
+}
+
+// GetValidateKey 得到验证键
+func (p *Pic) GetValidateKey(account string) string {
+	return fmt.Sprintf("pic_captcha_validate:%s", account)
 }

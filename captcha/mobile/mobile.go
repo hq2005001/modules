@@ -17,7 +17,8 @@ import (
 
 const (
 	// Name 名称
-	Name = "mobile"
+	Name  = "mobile"
+	Topic = "sms_captcha"
 )
 
 // Mobile 邮箱
@@ -47,7 +48,7 @@ func (e *Mobile) Send(ip, account, subject, content string) error {
 		return err
 	}
 	e.LogSendNum(ctx, ip, account)
-	_ = nsq.Produce(e.QueueConfig, "sms_captcha", rs.([]byte))
+	_ = nsq.Produce(e.QueueConfig, Topic, rs.([]byte))
 	return nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"github.com/hq2005001/modules/captcha/conf"
 	"github.com/hq2005001/modules/captcha/email"
 	"github.com/hq2005001/modules/captcha/mobile"
+	"github.com/hq2005001/modules/captcha/pic"
 	"github.com/hq2005001/modules/drivers/nsq"
 	"github.com/hq2005001/modules/drivers/redis"
 )
@@ -24,6 +25,8 @@ func New(name string, config *conf.Config, nsqConfig *nsq.NsqConfig, redisConf *
 		return &email.Email{Config: config, QueueConfig: nsqConfig, RedisConf: redisConf}
 	case mobile.Name:
 		return &mobile.Mobile{Config: config, QueueConfig: nsqConfig, RedisConf: redisConf}
+	case pic.Name:
+		return &pic.Pic{Config: config, QueueConfig: nsqConfig, RedisConf: redisConf}
 	default:
 		return &mobile.Mobile{Config: config, QueueConfig: nsqConfig, RedisConf: redisConf}
 	}
