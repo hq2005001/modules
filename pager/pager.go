@@ -122,7 +122,7 @@ const (
 )
 
 type Pager struct {
-	Rows  int    `json:"rows" form:"rows"`
+	Rows  int    `json:"row" form:"row"`
 	Page  int    `json:"page" form:"page"`
 	Sort  string `json:"sort" form:"sort"` // -created_at, +updated_at
 	Edges string `json:"edges" form:"edges"`
