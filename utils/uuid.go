@@ -5,6 +5,8 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+
+	uuid "github.com/satori/go.uuid"
 )
 
 var (
@@ -86,4 +88,12 @@ func ParseString(str string) (UUID, error) {
 	}
 
 	return uuid, nil
+}
+
+func NewUUIDV5(str string) UUID {
+	uuid1, err := uuid.FromString("00000000-0000-0000-0000-000000000000")
+	if err != nil {
+		return UUID(uuid.NewV1())
+	}
+	return UUID(uuid.NewV5(uuid1, str))
 }

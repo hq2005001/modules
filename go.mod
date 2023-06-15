@@ -17,6 +17,7 @@ require (
 	github.com/rabbitmq/amqp091-go v1.8.1
 	github.com/redis/go-redis/v9 v9.0.4
 	github.com/robfig/cron/v3 v3.0.1
+	github.com/satori/go.uuid v1.2.0
 	github.com/shopspring/decimal v1.3.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/smartwalle/alipay/v3 v3.2.11
