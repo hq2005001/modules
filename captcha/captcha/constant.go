@@ -4,5 +4,5 @@ import "time"
 
 const (
 	// CacheMinute 缓存时间
-	CacheMinute time.Duration = 2
+	CacheMinute time.Duration = 10 * time.Minute
 )
