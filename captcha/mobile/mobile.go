@@ -32,8 +32,9 @@ type Mobile struct {
 type SmsContent struct {
 	RawAccount string `json:"raw_account"`
 	Account    string `json:"account"`
-	Code       string `json:"code"`
-	MsgType    string `json:"msg_type"`
+	//Code       string            `json:"code"`
+	MsgType string            `json:"msg_type"`
+	Params  map[string]string `json:"params"`
 }
 
 // Send 发送
@@ -67,8 +68,11 @@ func (e *Mobile) GenerateContent(account, subject, content string) (interface{},
 	rs := SmsContent{
 		RawAccount: account,
 		Account:    mobile,
-		Code:       content,
-		MsgType:    msgType,
+		//Code:       content,
+		MsgType: msgType,
+		Params: map[string]string{
+			"code": content,
+		},
 	}
 	b, err := jsoniter.Marshal(rs)
 	if err != nil {
