@@ -53,7 +53,7 @@ func (a *Alipay) Create(params payment.CreatePaymentParam) payment.CreatePayment
 	p.Subject = params.Title
 	p.Body = params.Body
 	p.TimeoutExpress = "30m"
-	p.TotalAmount = fmt.Sprintf("%.2f", params.Total.InexactFloat64())
+	p.TotalAmount = params.Total.RoundDown(2).String()
 	response, err := a.client.TradePreCreate(p)
 	if err != nil {
 		return payment.CreatePaymentResult{
