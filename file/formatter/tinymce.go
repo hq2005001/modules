@@ -32,6 +32,16 @@ func (c2 tinymceFormatter) Format(
 	})
 }
 
+func (c2 tinymceFormatter) DryFormat(
+	c *gin.Context,
+	locale *i18n.I18N,
+	group string,
+	domain string,
+	fileInfo *upload.UploadFileInfo,
+) string {
+	return fmt.Sprintf("%s%s", domain, fileInfo.FilePath)
+}
+
 func (c2 tinymceFormatter) FormatMulti(
 	c *gin.Context,
 	locale *i18n.I18N,

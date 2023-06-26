@@ -36,6 +36,16 @@ func (c2 customFormatter) Format(
 	})
 }
 
+func (c2 customFormatter) DryFormat(
+	c *gin.Context,
+	locale *i18n.I18N,
+	group string,
+	domain string,
+	fileInfo *upload.UploadFileInfo,
+) string {
+	return fmt.Sprintf("%s%s", domain, fileInfo.FilePath)
+}
+
 func (c2 customFormatter) FormatMulti(
 	c *gin.Context,
 	locale *i18n.I18N,

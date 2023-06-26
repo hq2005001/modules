@@ -1,6 +1,9 @@
 package utils
 
 import (
+	"crypto/md5"
+	"encoding/hex"
+	"io"
 	"os"
 	"path"
 )
@@ -44,4 +47,15 @@ func Write(filename string, content string) (*os.File, error) {
 // LockFile 文件加锁
 func LockFile(file *os.File) error {
 	return Flock(int(file.Fd()), LOCK_EX|LOCK_NB)
+}
+
+func FileMd5(filename string) string {
+	f, err := os.Open(filename)
+	if err != nil {
+		return ""
+	}
+	defer f.Close()
+	b := md5.New()
+	io.Copy(b, f)
+	return hex.EncodeToString(b.Sum(nil))
 }

@@ -57,9 +57,10 @@ func Logger(logf *logger.Logger) gin.HandlerFunc {
 			zap.Any("headers", c.Request.Header),
 		}
 
-		if utils.InArray([]string{"POST", "PUT", "DELETE"}, c.Request.Method) {
+		if utils.InArray([]string{"POST", "PUT", "DELETE"}, c.Request.Method) && c.Request.MultipartForm == nil {
 			logFields = append(logFields, zap.String("body", string(requestBody)))
 		}
+
 		if c.Request.Header.Get("Content-Type") == "application/json" {
 			logFields = append(logFields, zap.Any("response", w.body))
 		}

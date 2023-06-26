@@ -1,6 +1,8 @@
 package upload
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/hq2005001/modules/exception"
@@ -21,13 +23,17 @@ type ResponseFormatter func(c *gin.Context, group, path, name string)
 type ResponseFormatter1 func(c *gin.Context, group, path, name string) (string, error)
 type Formatter interface {
 	Format(c *gin.Context, locale *i18n.I18N, group string, domain string, fileInfo *UploadFileInfo)
+	DryFormat(c *gin.Context, locale *i18n.I18N, group string, domain string, fileInfo *UploadFileInfo) string
 	FormatMulti(c *gin.Context, locale *i18n.I18N, group string, domain string, filenames map[string]UploadFileInfo)
 }
+
+type SaveHandler func(fileInfo *UploadFileInfo, checkOnly bool) (*UploadFileInfo, bool, error)
 
 // Upload 上传
 func Upload(
 	key string,
 	locale *i18n.I18N,
+	saveHandler SaveHandler,
 	formatter Formatter,
 	domain string,
 	allowTypes ...string,
@@ -49,7 +55,7 @@ func Upload(
 			isMulti = true
 		}
 		for _, file := range form.File[key] {
-			uploadInfo, err = saveFile(c, file, group, allowTypes...)
+			uploadInfo, err = saveFile(c, locale, domain, file, group, saveHandler, formatter, allowTypes...)
 			if err != nil {
 				continue
 			}
@@ -84,7 +90,10 @@ func getOriginFilename(f *multipart.FileHeader) string {
 type UploadFileInfo struct {
 	Filename   string
 	FilePath   string
+	Digest     string
+	Ext        string
 	OriginName string
+	URL        string
 }
 
 type uploadFileInfos []UploadFileInfo
@@ -105,7 +114,16 @@ func (u uploadFileInfos) FileMap() map[string]UploadFileInfo {
 	return rs
 }
 
-func saveFile(c *gin.Context, file *multipart.FileHeader, group string, allowTypes ...string) (*UploadFileInfo, error) {
+func saveFile(
+	c *gin.Context,
+	locale *i18n.I18N,
+	domain string,
+	file *multipart.FileHeader,
+	group string,
+	saveHandler SaveHandler,
+	formatter Formatter,
+	allowTypes ...string,
+) (*UploadFileInfo, error) {
 
 	f, err := file.Open()
 	defer f.Close()
@@ -133,17 +151,37 @@ func saveFile(c *gin.Context, file *multipart.FileHeader, group string, allowTyp
 			return nil, err
 		}
 	}
+	d := md5.New()
+	d.Write(byt)
+	digest := hex.EncodeToString(d.Sum(nil))
 	originName := getOriginFilename(file)
 	fileName := fmt.Sprintf("%s/%d.%s", uploadDir, id, fileType)
-	err = c.SaveUploadedFile(file, fileName)
-	if err != nil {
-		return nil, err
-	}
 	filePath := fmt.Sprintf("/upload/%s/%d.%s", group, id, fileType)
 	filePath = strings.ReplaceAll(filePath, "//", "/")
-	return &UploadFileInfo{
+
+	info := &UploadFileInfo{
 		Filename:   fileName,
+		Digest:     digest,
+		Ext:        fileType,
 		FilePath:   filePath,
 		OriginName: originName,
-	}, nil
+	}
+	needSave := true
+	if saveHandler != nil {
+		url := formatter.DryFormat(c, locale, group, domain, info)
+		info.URL = url
+		info, needSave, err = saveHandler(info, true)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if needSave {
+		err = c.SaveUploadedFile(file, fileName)
+		if err != nil {
+			return nil, err
+		}
+		_, _, _ = saveHandler(info, false)
+	}
+
+	return info, nil
 }
