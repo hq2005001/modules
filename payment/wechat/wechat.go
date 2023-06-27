@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"github.com/hq2005001/modules/payment/config"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/shopspring/decimal"
 
 	"github.com/hq2005001/modules/payment"
 	"github.com/hq2005001/modules/payment/iap"
@@ -109,7 +110,7 @@ func (w *Wechat) Create(params payment.CreatePaymentParam) payment.CreatePayment
 }
 
 // Refund 退款
-func (w *Wechat) Refund(id string, total, amount int64) interface{} {
+func (w *Wechat) Refund(id string, total, amount decimal.Decimal) interface{} {
 
 	if err := w.client.AddCertPkcs12FilePath(w.conf.CertPem); err != nil {
 		return false
@@ -119,8 +120,8 @@ func (w *Wechat) Refund(id string, total, amount int64) interface{} {
 	bm.Set("nonce_str", noncestr).
 		Set("out_trade_no", id).
 		Set("out_refund_no", id).
-		Set("total_fee", total).
-		Set("refund_fee", amount).
+		Set("total_fee", total.Mul(decimal.NewFromInt(100)).IntPart()).
+		Set("refund_fee", amount.Mul(decimal.NewFromInt(100)).IntPart()).
 		Set("sign_type", wechat.SignType_MD5)
 
 	////请求支付下单，成功后得到结果

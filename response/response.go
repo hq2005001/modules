@@ -42,14 +42,14 @@ func (r *Response) Json(data interface{}) {
 func (r *Response) Fail(msg exception.Exception) {
 	r.c.JSON(http.StatusOK, Result{
 		Code: msg.Code(),
-		Msg:  r.locale.Tr(msg.Msg(), r.params),
+		Msg:  r.locale.Tr(msg.Error(), r.params),
 	})
 }
 
 func (r *Response) Error(statusCode int, msg exception.Exception) {
 	r.c.JSON(statusCode, Result{
 		Code: msg.Code(),
-		Msg:  r.locale.Tr(msg.Msg(), r.params),
+		Msg:  r.locale.Tr(msg.Error(), r.params),
 	})
 }
 

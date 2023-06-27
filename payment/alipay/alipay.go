@@ -6,6 +6,7 @@ import (
 	"github.com/hq2005001/modules/payment"
 	"github.com/hq2005001/modules/payment/config"
 	"github.com/hq2005001/modules/payment/iap"
+	"github.com/shopspring/decimal"
 	"github.com/smartwalle/alipay/v3"
 	"net/http"
 	"net/url"
@@ -72,11 +73,11 @@ func (a *Alipay) Create(params payment.CreatePaymentParam) payment.CreatePayment
 }
 
 // Refund 退款
-func (a *Alipay) Refund(id string, total, amount int64) interface{} {
+func (a *Alipay) Refund(id string, total, amount decimal.Decimal) interface{} {
 	rs, err := a.client.TradeRefund(alipay.TradeRefund{
 		OutTradeNo:   id,
 		OutRequestNo: id,
-		RefundAmount: fmt.Sprintf("%.2f", float64(amount)/100),
+		RefundAmount: amount.RoundDown(2).String(),
 	})
 	if err != nil {
 		return false

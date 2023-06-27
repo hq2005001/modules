@@ -91,17 +91,18 @@ func (i *I18N) LoadByFs(dir embed.FS, unmarshal Unmarshal, allowExts []string) *
 		fileInfo := strings.Split(d.Name(), ".")
 		filename := fileInfo[0]
 		ext := fileInfo[1]
-		if utils.IsStrInArr(allowExts, ext) {
+		if !utils.IsStrInArr(allowExts, ext) {
 			return nil
 		}
-		content, _ := ioutil.ReadFile(path)
-		result := make(map[string]string)
-		err = unmarshal(content, &result)
-
+		content, err := dir.ReadFile(path)
 		if err != nil {
 			return err
 		}
-
+		result := make(map[string]string)
+		err = unmarshal(content, &result)
+		if err != nil {
+			return err
+		}
 		// 解析语言为tag
 		t, err := language.Parse(filename)
 		if err != nil {
@@ -109,7 +110,7 @@ func (i *I18N) LoadByFs(dir embed.FS, unmarshal Unmarshal, allowExts []string) *
 		}
 		i.Messages[t] = result
 		i.Tags = append(i.Tags, t)
-		return err
+		return nil
 	})
 	i.matcher = language.NewMatcher(i.Tags)
 	return i

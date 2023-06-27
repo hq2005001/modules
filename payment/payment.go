@@ -13,7 +13,7 @@ type Type string
 type IPayment interface {
 	Create(params CreatePaymentParam) CreatePaymentResult
 
-	Refund(id string, total, amount int64) interface{}
+	Refund(id string, total, amount decimal.Decimal) interface{}
 
 	Verify(id string, thirdID []string, extraData interface{}, price int) (bool, *[]iap.Response)
 	// 是否是内购
